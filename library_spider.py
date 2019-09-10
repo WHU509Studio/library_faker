@@ -98,7 +98,7 @@ class LibrarySpider:
 
     def __init__(self, name=None, pwd=None, cookies=None):
         if not (name or pwd or cookies):
-            raise AttributeError("name and pwd or cookies needed!")
+            raise Exception("name and pwd or cookies needed!")
         if not cookies:
             self.name = name
             self.pwd = pwd
@@ -141,7 +141,7 @@ class LibrarySpider:
             else:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  建立连接失败")
                 # 强制退出，终止 python 解释器
-                os._exit()
+                os._exit(-1)
 
 
 
