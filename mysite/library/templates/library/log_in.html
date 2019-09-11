@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>欢迎使用武汉大学图书馆抢座系统</h1>
+    <hr>
+    <form action="." method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="sessionid">Session ID</label>
+            <input id="sessionid" type="text" placeholder="your sessionid" required>
+        </div>
+
+        <input type="submit" value="确认" class="btn btn-danger">
+    </form>
+{% endblock %}
