@@ -102,7 +102,9 @@ class LibrarySpider:
         if not cookies:
             self.name = name
             self.pwd = pwd
-            self._get_cookie()
+            # 必须配合登陆脚本才能使用
+            # self._get_cookie()
+            raise Exception("cookies needed！")
         else:
             self.cookies = cookies
         
@@ -204,8 +206,9 @@ class LibrarySpider:
         # 选择靠窗
         self.window = datas.get("window")
 
-    def _get_cookie(self):
-        self.cookies = LibraryLogin(name=self.name, pwd=self.pwd, timeout=10).login()
+    # 这里必须配合登陆才能使用
+    # def _get_cookie(self):
+    #     self.cookies = LibraryLogin(name=self.name, pwd=self.pwd, timeout=10).login()
     
     # 派发请求
     # 采用协程可能会导致封号
@@ -315,3 +318,4 @@ if __name__ == "__main__":
     # spider = LibrarySpider(cookies={'JSESSIONID': '***************'})
     # print(spider.seat_info)
     # spider.cancel_seat()
+    pass
