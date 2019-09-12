@@ -18,7 +18,11 @@ def log_in(request):
 
 def library_form(request):
     if request.method == 'GET':
-        return render(request,'library/text.html')
+        # 感觉这里写的很不好，先实现了逻辑再说
+        spider = LibrarySpider(cookies=COOKIES)
+        seat_info = spider.seat_info
+        del spider
+        return render(request,'library/text.html', context={"seat_info": seat_info})
     elif request.method == 'POST':
        # print(request.POST.get('library'))
         building = request.POST.get("library")

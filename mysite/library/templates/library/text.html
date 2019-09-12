@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
+    <div class="container-fluid">
+        <h1 style="text-align: center; color: lightgreen">请选择预约偏好</h1>
+    </div>
+    <div class="container">
+        <p>我的预约：
+        {% if seat_info.cancel_id %}
+            {{ seat_info.location_info }}
+            <button type="button" class="btn btn-warning">取消预约</button>
+        {% else %}
+            无
+        {% endif %}
+        </p>
+    </div>
     <form action="." method="POST">
         {% csrf_token %}
         <div class="form-row align-items-center">
