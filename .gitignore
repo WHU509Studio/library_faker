@@ -5,3 +5,4 @@ venv/
 .gitignore
 *.pyc
 mysite/library/__pycache__/
+mysite/mysite/__pycache__/
