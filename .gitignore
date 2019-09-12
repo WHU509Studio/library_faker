@@ -2,3 +2,6 @@
 venv/
 .vscode/
 .idea/
+.gitignore
+*.pyc
+mysite/library/__pycache__/

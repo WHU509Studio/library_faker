@@ -6,4 +6,5 @@ app_name = 'library'
 urlpatterns = [
     path('', views.log_in),
     path('library/', views.library_form, name='library'),
+    path("check/", views.ssid_check, name="ssid"),
 ]

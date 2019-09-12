@@ -13,7 +13,9 @@ from datetime import datetime
 from copy import deepcopy
 import re
 
-JSON_PATH = "library_urls.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+JSON_PATH = os.path.join(BASE_DIR, "library_urls.json")
 
 concurrent = ContextVar("concurrent")
 
@@ -28,7 +30,9 @@ def get_json_humanly(url, ua, cookies, onDate="", building="null", room="null",
         "User-Agent": ua,
         "Host": "seat.lib.whu.edu.cn",
         "Referer": "https://seat.lib.whu.edu.cn/",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
+    # 注意这里必须要使用 application/x-www-form-urlencoded 编码格式
     payload = {
         "onDate": onDate,
         "building": building,
@@ -39,7 +43,8 @@ def get_json_humanly(url, ua, cookies, onDate="", building="null", room="null",
         "power": power,
         "window": window
     }
-    r = requests.get(url=url, headers=headers, data=payload, cookies=cookies)
+    print(payload)
+    r = requests.post(url=url, headers=headers, data=payload, cookies=cookies)
     if r.status_code == 200:
         return r.json()
     else:
@@ -54,8 +59,9 @@ async def get_json(url, ua, cookies, onDate="", building="null", room="null",
         "User-Agent": ua,
         "Host": "seat.lib.whu.edu.cn",
         "Referer": "https://seat.lib.whu.edu.cn/",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-
+    # 注意这里必须要使用 application/x-www-form-urlencoded 编码格式
     payload = {
         "onDate": onDate,
         "building": building,
@@ -66,7 +72,7 @@ async def get_json(url, ua, cookies, onDate="", building="null", room="null",
         "power": power,
         "window": window
     }
-
+    print(payload)
     sem = concurrent.get()
     try:
         async with sem:
@@ -90,6 +96,8 @@ def check_valid_cookie(cookies):
     r = requests.get(url=url, headers=headers, cookies=cookies)
     if r.status_code == 200:
         if r.url == url:
+            if r.text == "系统维护中，请稍候访问":
+                return 2
             return True
 
     return False
@@ -235,18 +243,19 @@ class LibrarySpider:
         # 随机抢座
         pattern = re.compile(".*?(\d+)")
         flag = 0
-        for room in self.rooms.get(building):
+        for room, room_id in self.rooms.get(building).items():
             if flag:
                 break
             time.sleep(1)
-            data_json = get_json_humanly(self.search_url, self.ua.random, cookies=self.cookies, room=room, building=building,
-                                startMin=self.startMin, endMin=self.endMin)
+            data_json = get_json_humanly(self.search_url, self.ua.random, cookies=self.cookies, room=room_id, building=building,
+                                startMin=self.startTime, endMin=self.endTime)
             print(f"正在尝试房间：{room}")
             if data_json.get("seatNum"):
                 doc = pq(data_json.get("seatStr"))
                 for li in doc("li"):
                     seat_id = pattern.match(li.attrib.get("id")).group(1)
-                    result = self.fetch_seat(seat_id, self.startTime, self.endTime, date="2019-09-11")
+                    print(seat_id)
+                    result = self.fetch_seat(seat_id, self.startTime, self.endTime, date="")
                     if result:
                         flag = 1
                         self._get_seat_info()
@@ -283,6 +292,7 @@ class LibrarySpider:
         fetch_url = "https://seat.lib.whu.edu.cn/selfRes"
         res = req.post(url=fetch_url, headers=headers, data=payload, cookies=self.cookies)
         if res.status_code == 200:
+            # print(res.text)
             return True
         else:
             print(res.status_code)
