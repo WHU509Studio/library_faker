@@ -124,8 +124,6 @@ class LibrarySpider:
         }
         self._load_data()
 
-        # 图书馆使用 session 而非 cookie，只要客户端一直活动，那么session就永远不会过期
-        Thread(target=self._update_cookies).start()
         # 返回是否抢座，若抢座返回抢座的信息
         self._get_seat_info()
 
@@ -136,6 +134,10 @@ class LibrarySpider:
         headers = deepcopy(self.base_headers)
         headers["User-Agent"] = self.ua.random
         return headers
+
+    # 图书馆使用 session 而非 cookie，只要客户端一直活动，那么session就永远不会过期
+    def keep_connection(self):
+        Thread(target=self._update_cookies).start()
 
     # 为了避免 sessionid 过期，定时更新
     def _update_cookies(self):
@@ -152,9 +154,6 @@ class LibrarySpider:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  建立连接失败")
                 # 强制退出，终止 python 解释器
                 os._exit(-1)
-
-
-
 
     def _get_seat_info(self):
         
@@ -231,6 +230,8 @@ class LibrarySpider:
 
         tasks = []
         for room in self.rooms.get(building):
+            # if room == "4":
+            #     continue
             tasks.append(asyncio.create_task(get_json(self.search_url, self.ua.random, cookies=self.cookies, room=room, building=building,
                                                         startMin=self.startTime, endMin=self.endTime)))
         await asyncio.wait(tasks, return_when="ALL_COMPLETED")
@@ -243,7 +244,11 @@ class LibrarySpider:
         # 随机抢座
         pattern = re.compile(".*?(\d+)")
         flag = 0
+        # 不希望加入的房间序号
+        room_not_expected = ["3C创客空间", "创新学习讨论区", "创新学习苹果区"]
         for room, room_id in self.rooms.get(building).items():
+            if room in room_not_expected:
+                continue
             if flag:
                 break
             time.sleep(1)
@@ -260,8 +265,10 @@ class LibrarySpider:
                         flag = 1
                         self._get_seat_info()
                         break
-        print(f"预约成功，座位信息\n{self.seat_info}")
-
+        if flag:
+            print(f"预约成功，座位信息\n{self.seat_info}")
+        else:
+            print("预约失败，没有座位")
 
     def fetch_seat(self, seat_id, startTime, endTime, date=""):
         # 为了获取 token
