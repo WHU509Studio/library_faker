@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
 </head>
 <body>
-    {% block body %}{% endblock %}
+    <script src="{% static 'js/somemethods.js' %}"></script>
     <script src="{% static 'jquery/jquery.js' %}"></script>
+    {% block body %}{% endblock %}
 </body>
 </html>

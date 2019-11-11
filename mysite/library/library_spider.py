@@ -12,6 +12,8 @@ import time
 from datetime import datetime
 from copy import deepcopy
 import re
+from .models import CookieModel
+from django.shortcuts import get_object_or_404
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -149,6 +151,10 @@ class LibrarySpider:
             r = requests.get(url=url, headers=headers, cookies=self.cookies)
             if r.url == url:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  维持会话成功")
+                object = get_object_or_404(CookieModel, cookies=self.cookies)
+                now_time = int(time.time())
+                object.last_time = now_time
+                object.save()
                 time.sleep(600)
             else:
                 print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  建立连接失败")
@@ -245,30 +251,40 @@ class LibrarySpider:
         pattern = re.compile(".*?(\d+)")
         flag = 0
         # 不希望加入的房间序号
-        room_not_expected = ["3C创客空间", "创新学习讨论区", "创新学习苹果区"]
-        for room, room_id in self.rooms.get(building).items():
-            if room in room_not_expected:
-                continue
-            if flag:
-                break
-            time.sleep(1)
-            data_json = get_json_humanly(self.search_url, self.ua.random, cookies=self.cookies, room=room_id, building=building,
-                                startMin=self.startTime, endMin=self.endTime)
-            print(f"正在尝试房间：{room}")
-            if data_json.get("seatNum"):
-                doc = pq(data_json.get("seatStr"))
-                for li in doc("li"):
-                    seat_id = pattern.match(li.attrib.get("id")).group(1)
-                    print(seat_id)
-                    result = self.fetch_seat(seat_id, self.startTime, self.endTime, date="")
-                    if result:
-                        flag = 1
-                        self._get_seat_info()
+        room_not_expected = ["3C创客空间", "创新学习讨论区", "创新学习苹果区", "3C创客电子阅读"]
+
+        # 定时抢座
+        self.keep_connection()
+        while True:
+            for room, room_id in self.rooms.get(building).items():
+                try:
+                    if room in room_not_expected:
+                        continue
+                    if flag:
                         break
-        if flag:
-            print(f"预约成功，座位信息\n{self.seat_info}")
-        else:
-            print("预约失败，没有座位")
+                    time.sleep(1)
+                    data_json = get_json_humanly(self.search_url, self.ua.random, cookies=self.cookies, room=room_id, building=building,
+                                        startMin=self.startTime, endMin=self.endTime)
+                    print(f"正在尝试房间：{room}")
+                    if data_json.get("seatNum"):
+                        doc = pq(data_json.get("seatStr"))
+                        for li in doc("li"):
+                            seat_id = pattern.match(li.attrib.get("id")).group(1)
+                            print(seat_id)
+                            result = self.fetch_seat(seat_id, self.startTime, self.endTime, date="")
+                            if result:
+                                flag = 1
+                                self._get_seat_info()
+                                break
+                except Exception as e:
+                    print(e.args)
+            if flag:
+                print(f"预约成功，座位信息\n{self.seat_info}")
+                break
+            else:
+                print("预约失败，没有座位")
+                time.sleep(900)
+
 
     def fetch_seat(self, seat_id, startTime, endTime, date=""):
         # 为了获取 token

@@ -99,7 +99,7 @@
 {#        <h2>结束时间</h2>#}
         <label for="endTime">endTime</label>
         <select name="endMin" id="endTime" class="custom-select col-2">
-            <option value="08:00">08:00</option>
+            <option value="08:00" disabled>08:00</option>
             <option value="08:15">08:15</option>
             <option value="08:30">08:30</option>
             <option value="08:45">08:45</option>
@@ -162,4 +162,47 @@
         <hr>
         <button type="submit" class="btn btn-dark">Fetch seat</button>
     </form>
+
+    <script>
+        let now_time = getNowTime();
+        let start_list = $("#startTime")
+        let start_index = compare_time(start_list, now_time);
+        remove_node(start_list, start_index);
+        let end_list = $("#endTime");
+        let end_index = start_index + 1;
+        remove_node(end_list, end_index);
+
+        function remove_node(list, index) {
+            for (let i = 0; i < index; i++) {
+                list[0][0].remove();
+            }
+        }
+
+        function compare_time(list, now_time) {
+            let index = -1;
+            for (let i = 0; i < list[0].length; i++) {
+                let time_stamp = str_to_num(list[0][i].value);
+                if (time_stamp > now_time) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index === -1) {
+                console.log("No match time!");
+                return null;
+            }
+            else {
+                return index;
+            }
+
+        }
+
+        function str_to_num(time_str) {
+            let time_list = time_str.split(":");
+            return Number(time_list[0]) * 60 + Number(time_list[1]);
+        }
+    </script>
+
+
+
 {% endblock %}
